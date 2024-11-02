@@ -4,7 +4,7 @@
 library(class)
 library(caret)
 
-#load in a literary corpus. Filedir should be the directory of the function words, which contains one folder for
+#load in a literary corpus., which contains one folder for
 #each author. The 'featureset' argument denotes the type of features that should be used
 loadCorpus <- function(filedir,featureset="functionwords",maxauthors=Inf) {
   authornames <- list.files(filedir)
@@ -207,21 +207,16 @@ KfoldCrossVal<- function(method,k){
 #' text using all other texts (except unknown) as training data 
 
 LOOCV <- function(method){
-  # Removing unknown author 
-  known_authors <- M[[1]][-9]
   
   # initializing lists 
   predictions <- NULL
   truth <- NULL
   
   # Looping through each authors texts 
-  for(i in 1:length(known_authors)) {
-    for(j in 1:nrow(known_authors[[i]])){
-      if(nrow(known_authors[[i]]) <= 1){
-        cat(j)
-      } else{
-        test_data <- matrix(known_authors[[i]][j, ], nrow = 1)
-        train_data <- known_authors
+  for(i in 1:length(all_texts)) {
+    for(j in 1:nrow(all_texts[[i]])){
+        test_data <- matrix(all_texts[[i]][j, ], nrow = 1)
+        train_data <- all_texts
         train_data[[i]] <- train_data[[i]][-j,, drop = FALSE]
         
         #using method to make prediction for test data text 
@@ -230,7 +225,6 @@ LOOCV <- function(method){
         
         #Adding true author to the truth list 
         truth <- c(truth, i)
-      }
     }
   }
   # returning list of predictions and true authors 
@@ -247,10 +241,10 @@ confusion_matrix <- function(method){
   leave_one_out <- LOOCV(method)
   
   # getting the list of predicted values for known authors
-  pred_labels <- factor(leave_one_out[[1]], levels = 1:11)
+  pred_labels <- factor(leave_one_out[[1]], levels = 1:2)
   
   # getting list of true values for known authors 
-  true_labels <- factor(leave_one_out[[2]], levels = 1:11)
+  true_labels <- factor(leave_one_out[[2]], levels = 1:2)
   
   # Creating confusion matrix 
   return(confusionMatrix(pred_labels, true_labels))
