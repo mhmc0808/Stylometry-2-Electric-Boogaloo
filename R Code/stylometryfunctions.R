@@ -68,7 +68,6 @@ myKNN <- function(traindata, testdata, trainlabels, k=1) {
 discriminantCorpus <- function(traindata, testdata) {
   thetas <- NULL
   preds <- NULL
-  probs_matrix <- matrix(0, nrow = nrow(testdata), ncol = length(traindata))
   
   #first learn thea model for each aauthor
   for (i in 1:length(traindata)) {
@@ -86,12 +85,9 @@ discriminantCorpus <- function(traindata, testdata) {
     for (j in 1:nrow(thetas)) {
       probs <- c(probs, dmultinom(testdata[i,],prob=thetas[j,],log=TRUE))
     }
-    # Store the probabilities for this test instance in the probs_matrix
-    probs_matrix[i, ] <- probs
-    # Append the predicted class (index of the max probability)
     preds <- c(preds, which.max(probs))
   }
-  return(list(preds, probs_matrix))
+  return(preds)
 }
 
 
@@ -141,115 +137,5 @@ randomForestCorpus <- function(traindata, testdata) {
   for (i in 1:nrow(testdata)) {
     preds[i] <- predict(rf,testdata[i,])
   }
-  return(list(preds))
+  return(preds)
 }
-  
-#' K fold Cross Validation
-#' Function carries out K fold cross validation for a given model and reports accuracy 
-KfoldCrossVal<- function(method,k){
-  # creating version fot the data without unknown author 
-  data_new <- data[-27, ]
-
-  # initializing vector to hold accuracies 
-  accuracies <- numeric(k)
-  
-  #creating folds 
-  folds <- createFolds(1:nrow(data_new), k)
-  
-  # performing cross validation loop
-  for (i in 1:k){
-    train_folds <- folds[-i]
-    test_folds <- folds[[i]]
-    combined_folds <- do.call(c, train_folds)
-    test_data <- data_new[0, ]
-    train_data <- data_new[0, ]
-    
-    # create testing and training data 
-    test_data <- data_new[test_folds, ]  
-    train_data <- data_new[combined_folds, ]  
-    test_data <- as.matrix(test_data[, !names(test_data) %in% c("author", "bookname")])
-    
-    # Initialize a list to store matrices for each author
-    author_matrices <- list()
-    authors <- M$authornames
-    
-    # Loop through each unique author
-    for (auth in authors) {
-      # Extract rows corresponding to the current author
-      author_data <- train_data[train_data$author == auth, ]
-      
-      # Convert the extracted rows to a matrix (excluding the 'author' column itself)
-      author_matrix <- as.matrix(author_data[, !names(author_data) %in% c("author", "bookname")])
-      
-      # Add the matrix to the list, using the author's name as the key
-      author_matrices[[auth]] <- author_matrix
-    }
-    
-    # Now use method to determine predictions for testing data 
-    preds <- method(author_matrices, test_data)[[1]]
-    
-    # creating list of true labels of texts
-    true_vals <- NULL
-    true_authors <- data_new$author[test_folds]
-    for(a in true_authors){
-      true_vals <- append(true_vals, which(authors == a))
-    }
-    
-    # Calculate and store accuracy
-    accuracies[i] <- mean(preds == true_vals)
-  }
-  
-  mean_accuracy <- mean(accuracies)
-}
-
-#' Leave one out Cross Validation 
-#' This function conducts leave one out cross validation and returns a list of predictions for each 
-#' text using all other texts (except unknown) as training data 
-
-LOOCV <- function(method){
-  
-  # initializing lists 
-  predictions <- NULL
-  truth <- NULL
-  
-  # Looping through each authors texts 
-  for(i in 1:length(all_texts)) {
-    for(j in 1:nrow(all_texts[[i]])){
-        test_data <- matrix(all_texts[[i]][j, ], nrow = 1)
-        train_data <- all_texts
-        train_data[[i]] <- train_data[[i]][-j,, drop = FALSE]
-        
-        #using method to make prediction for test data text 
-        pred <- method(train_data, test_data)[[1]]
-        predictions <- c(predictions,pred)
-        
-        #Adding true author to the truth list 
-        truth <- c(truth, i)
-    }
-  }
-  # returning list of predictions and true authors 
-  return(list(predictions = predictions, truth = truth))
-}
-
-
-#' Confusion Matrix 
-#' This function creates the confusion matrix given a function that returns predictions for each text in a list
-#' using training and testing data   
-
-confusion_matrix <- function(method){
-  # performing LOOCV to get predicted authors for each text 
-  leave_one_out <- LOOCV(method)
-  
-  # getting the list of predicted values for known authors
-  pred_labels <- factor(leave_one_out[[1]], levels = 1:2)
-  
-  # getting list of true values for known authors 
-  true_labels <- factor(leave_one_out[[2]], levels = 1:2)
-  
-  # Creating confusion matrix 
-  return(confusionMatrix(pred_labels, true_labels))
-}
-
-  
-
-  
