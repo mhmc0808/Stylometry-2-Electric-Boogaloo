@@ -6,31 +6,31 @@ library(caret)
 
 #load in a literary corpus., which contains one folder for
 #each author. The 'featureset' argument denotes the type of features that should be used
-loadCorpus <- function(filedir,featureset="functionwords",maxauthors=Inf) {
-  authornames <- list.files(filedir)
-  booknames <- list()
+loadCorpus <- function(filedir,featureset="functionwords",maxcategories=Inf) {
+  categories <- list.files(filedir)
+  essaynames <- list()
   features <- list()
   count <- 0
   
-  for (i in 1:length(authornames)) {
+  for (i in 1:length(categories)) {
     #print(i)
-    if (count >= maxauthors) {break}
-    files <- list.files(sprintf("%s%s/",filedir,authornames[i]))
+    if (count >= maxcategories) {break}
+    files <- list.files(sprintf("%s%s/",filedir,categories[i]))
     if (length(files)==0) {next}
     
     firstbook <- FALSE
-    booknames[[i]] <- character()
+    essaynames[[i]] <- character()
     for (j in 1:length(files)) {
-      path <- sprintf("%s%s/%s",filedir,authornames[i],files[j])
+      path <- sprintf("%s%s/%s",filedir,categories[i],files[j])
       
       fields <- strsplit(files[j],split=' --- ')[[1]]  
       
       if (sprintf("%s.txt",featureset) == fields[2]) {
-        booknames[[i]] <- c(booknames[[i]], fields[1])
+        essaynames[[i]] <- c(essaynames[[i]], fields[1])
         count <- count+1
         M <- as.matrix(read.csv(path,sep=',',header=FALSE))  
-        if (firstbook == FALSE) {
-          firstbook <- TRUE
+        if (firstessay == FALSE) {
+          firstessay <- TRUE
           features[[i]] <- M
         } else {
           features[[i]]  <- rbind(features[[i]],M)
@@ -39,7 +39,7 @@ loadCorpus <- function(filedir,featureset="functionwords",maxauthors=Inf) {
       }
     }
   }
-  return(list(features=features,booknames=booknames,authornames=authornames))
+  return(list(features=features,essaynames=essaynames,categories=categories))
 }
 
 myKNN <- function(traindata, testdata, trainlabels, k=1) {
