@@ -18,7 +18,7 @@ loadCorpus <- function(filedir,featureset="functionwords",maxcategories=Inf) {
     files <- list.files(sprintf("%s%s/",filedir,categories[i]))
     if (length(files)==0) {next}
     
-    firstbook <- FALSE
+    firstessay <- FALSE
     essaynames[[i]] <- character()
     for (j in 1:length(files)) {
       path <- sprintf("%s%s/%s",filedir,categories[i],files[j])
